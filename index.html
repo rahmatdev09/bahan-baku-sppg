@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daftar Barang</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen flex flex-col">
+    <!-- Header dengan foto -->
+    <header
+      class="bg-blue-600 text-white p-4 flex items-center justify-center space-x-3"
+    >
+      <img
+        src="image/Picture1.png"
+        alt="Logo"
+        class="w-10 object-cover h-10 rounded-full border-white"
+      />
+      <h1 class="text-lg font-bold">Daftar Barang</h1>
+    </header>
+
+    <!-- List Container -->
+    <main class="flex-1 p-4">
+      <ul id="barangList" class="space-y-3"></ul>
+    </main>
+
+    <!-- Alert container -->
+    <div id="alertBox" class="fixed bottom-5 right-5 hidden">
+      <div
+        class="bg-green-500 text-white px-4 py-2 rounded shadow-lg transform transition-all duration-500 opacity-0 scale-90"
+      >
+        ✅ Barang berhasil diupdate!
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div
+      id="modal"
+      class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center"
+    >
+      <div
+        class="bg-white rounded-lg shadow-lg w-11/12 max-w-md h-screen overflow-y-auto p-6 relative"
+      >
+        <button
+          id="closeModal"
+          class="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+        >
+          ✖
+        </button>
+        <h2 class="text-xl font-bold mb-4">Detail Barang</h2>
+        <form id="barangForm" class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium">Foto Barang 1</label>
+            <input
+              type="file"
+              id="fotoBarang"
+              accept="image/*"
+              class="w-full border rounded p-2"
+            />
+            <img
+              id="previewImage"
+              class="mt-2 w-32 h-32 object-cover rounded border hidden"
+              alt="Preview Foto 1"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Foto Barang 2</label>
+            <input
+              type="file"
+              id="fotoBarang2"
+              accept="image/*"
+              class="w-full border rounded p-2"
+            />
+            <img
+              id="previewImage2"
+              class="mt-2 w-32 h-32 object-cover rounded border hidden"
+              alt="Preview Foto 2"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Nama Barang</label>
+            <input
+              type="text"
+              id="namaBarang"
+              class="w-full border rounded p-2 bg-gray-100"
+              disabled
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Jumlah Kebutuhan</label>
+            <input
+              type="text"
+              id="jumlahKebutuhan"
+              class="w-full border rounded p-2 bg-gray-100"
+              disabled
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium"
+              >Jumlah Barang Datang</label
+            >
+            <input
+              type="number"
+              id="jumlahDatang"
+              class="w-full border rounded p-2"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Satuan Barang</label>
+            <input
+              type="text"
+              id="satuanBarang"
+              class="w-full border rounded p-2"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Tanggal Barang</label>
+            <input
+              type="date"
+              id="tanggalBarang"
+              class="w-full border rounded p-2"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Jam Barang</label>
+            <input
+              type="time"
+              id="jamBarang"
+              class="w-full border rounded p-2"
+            />
+          </div>
+          <div class="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="verifikasiBarang"
+              class="h-4 w-4 text-blue-600 border-gray-300 rounded"
+            />
+            <label for="verifikasiBarang" class="text-sm font-medium"
+              >Data sudah diverifikasi ✅</label
+            >
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          >
+            Update
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

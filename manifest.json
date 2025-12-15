@@ -1,0 +1,16 @@
+{
+  "name": "Naila Jasmin",
+  "short_name": "Naila Jasmin",
+  "start_url": "/index.html",
+  "display": "fullscreen",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/image/Picture1.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
