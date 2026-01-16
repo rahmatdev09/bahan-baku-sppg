@@ -7,6 +7,7 @@ import {
   updateDoc,
 } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
+// --- Configuration & Initialization ---
 const firebaseConfig = {
   apiKey: "AIzaSyBC598epFdcqsFp9cg3y9-Fi40PvpGX44I",
   authDomain: "nailajasmin-c3d98.firebaseapp.com",
@@ -20,46 +21,71 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const barangList = document.getElementById("barangList");
-const modal = document.getElementById("modal");
-const closeModal = document.getElementById("closeModal");
-const barangForm = document.getElementById("barangForm");
-const alertBox = document.getElementById("alertBox");
-
+// --- State & Elements ---
 let currentDocId = null;
+const elements = {
+  barangList: document.getElementById("barangList"),
+  skeleton: document.getElementById("skeletonLoader"),
+  modal: document.getElementById("modal"),
+  modalContent: document.getElementById("modalContent"),
+  closeModal: document.getElementById("closeModal"),
+  barangForm: document.getElementById("barangForm"),
+  alertBox: document.getElementById("alertBox"),
+  globalLoader: document.getElementById("globalLoader"),
+  foto1: document.getElementById("fotoBarang"),
+  foto2: document.getElementById("fotoBarang2"),
+  preview1: document.getElementById("previewImage"),
+  preview2: document.getElementById("previewImage2"),
+  placeholder1: document.getElementById("placeholder1"),
+  placeholder2: document.getElementById("placeholder2"),
+};
 
-const fotoInput = document.getElementById("fotoBarang");
-const fotoInput2 = document.getElementById("fotoBarang2");
-const previewImage = document.getElementById("previewImage");
-const previewImage2 = document.getElementById("previewImage2");
+// --- UI Helpers ---
+const toggleSkeleton = (isLoading) => {
+  if (isLoading) {
+    elements.skeleton.classList.remove("hidden");
+    elements.barangList.classList.add("hidden");
+  } else {
+    elements.skeleton.classList.add("hidden");
+    elements.barangList.classList.remove("hidden");
+  }
+};
 
-// Preview Foto 1
-fotoInput.addEventListener("change", () => {
-  const file = fotoInput.files[0];
+const showGlobalLoading = (show) => {
+  elements.globalLoader.classList.toggle("hidden", !show);
+};
+
+const showToast = () => {
+  const toastInner = elements.alertBox.querySelector("div");
+  elements.alertBox.classList.remove("hidden");
+  setTimeout(() => {
+    toastInner.classList.remove("opacity-0", "scale-90", "translate-y-4");
+    toastInner.classList.add("opacity-100", "scale-100", "translate-y-0");
+  }, 10);
+
+  setTimeout(() => {
+    toastInner.classList.add("opacity-0", "scale-90", "translate-y-4");
+    setTimeout(() => elements.alertBox.classList.add("hidden"), 500);
+  }, 3000);
+};
+
+// --- Image Handling ---
+const handlePreview = (input, preview, placeholder) => {
+  const file = input.files[0];
   if (file) {
     const reader = new FileReader();
     reader.onload = (e) => {
-      previewImage.src = e.target.result;
-      previewImage.classList.remove("hidden");
+      preview.src = e.target.result;
+      preview.classList.remove("hidden");
+      placeholder.classList.add("hidden");
     };
     reader.readAsDataURL(file);
   }
-});
+};
 
-// Preview Foto 2
-fotoInput2.addEventListener("change", () => {
-  const file = fotoInput2.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      previewImage2.src = e.target.result;
-      previewImage2.classList.remove("hidden");
-    };
-    reader.readAsDataURL(file);
-  }
-});
+elements.foto1.addEventListener("change", () => handlePreview(elements.foto1, elements.preview1, elements.placeholder1));
+elements.foto2.addEventListener("change", () => handlePreview(elements.foto2, elements.preview2, elements.placeholder2));
 
-// Compress image to base64
 function compressImage(file, maxWidth = 400, maxHeight = 400, quality = 0.7) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -68,72 +94,62 @@ function compressImage(file, maxWidth = 400, maxHeight = 400, quality = 0.7) {
       img.src = event.target.result;
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
+        let { width, height } = img;
         if (width > height) {
-          if (width > maxWidth) {
-            height *= maxWidth / width;
-            width = maxWidth;
-          }
+          if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
         } else {
-          if (height > maxHeight) {
-            width *= maxHeight / height;
-            height = maxHeight;
-          }
+          if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; }
         }
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL("image/jpeg", quality);
-        resolve(dataUrl);
+        resolve(canvas.toDataURL("image/jpeg", quality));
       };
     };
-    reader.onerror = (err) => reject(err);
+    reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 }
 
-// Load list barang
+// --- Data Fetching ---
 onSnapshot(collection(db, "barang"), (snapshot) => {
-  barangList.innerHTML = "";
+  toggleSkeleton(true);
+  elements.barangList.innerHTML = "";
+  
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
-
-    // Jika sudah diverifikasi admin, jangan tampilkan
     if (data.verifikasiAdmin) return;
 
     const li = document.createElement("li");
-    li.className = `p-4 rounded shadow cursor-pointer hover:bg-blue-50 
-      ${
-        data.verifikasi
-          ? "bg-green-100 border-l-4 border-green-500"
-          : "bg-white"
-      }`;
+    li.className = `group bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer flex justify-between items-center ${data.verifikasi ? 'border-l-4 border-l-green-500' : ''}`;
 
     li.innerHTML = `
-      <div class="flex justify-between items-center">
-        <span class="font-semibold">${data.nama}</span>
-        <span class="text-sm text-gray-600">Kebutuhan: ${
-          data.jumlahKebutuhan
-        }</span>
+      <div class="space-y-1">
+        <h3 class="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">${data.nama}</h3>
+        <p class="text-sm text-slate-500">Kebutuhan: <span class="font-semibold text-slate-700">${data.jumlahKebutuhan}</span></p>
+        ${data.verifikasi ? `
+          <div class="flex items-center text-[11px] font-bold uppercase tracking-wider text-green-600 mt-2 bg-green-50 px-2 py-1 rounded-lg w-fit">
+            <span class="mr-1">✓</span> Terverifikasi ${data.verifikasiTanggal || ""}
+          </div>
+        ` : ''}
       </div>
-      ${
-        data.verifikasi
-          ? `<div class="flex items-center text-green-600 text-sm mt-1">
-          <span class="mr-1">✅</span> Telah diverifikasi (${
-            data.verifikasiTanggal || ""
-          } ${data.verifikasiJam || ""})
-        </div>`
-          : ""
-      }
+      <div class="p-2 bg-slate-50 rounded-full group-hover:bg-blue-50 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
     `;
-    li.addEventListener("click", () => openModal(docSnap.id, data));
-    barangList.appendChild(li);
+    
+    li.onclick = () => openModal(docSnap.id, data);
+    elements.barangList.appendChild(li);
   });
+  
+  // Berikan sedikit jeda agar transisi halus
+  setTimeout(() => toggleSkeleton(false), 500);
 });
 
-// Saat buka modal, tampilkan foto lama jika ada
+// --- Modal Actions ---
 function openModal(id, data) {
   currentDocId = id;
   document.getElementById("namaBarang").value = data.nama || "";
@@ -142,88 +158,74 @@ function openModal(id, data) {
   document.getElementById("satuanBarang").value = data.satuan || "";
   document.getElementById("tanggalBarang").value = data.tanggal || "";
   document.getElementById("jamBarang").value = data.jam || "";
-  document.getElementById("verifikasiBarang").checked =
-    data.verifikasi || false;
+  document.getElementById("verifikasiBarang").checked = data.verifikasi || false;
 
-  previewImage.src = data.foto1 || "";
-  previewImage.classList.toggle("hidden", !data.foto1);
-  previewImage2.src = data.foto2 || "";
-  previewImage2.classList.toggle("hidden", !data.foto2);
+  // Reset & Set Previews
+  [elements.preview1, elements.preview2].forEach(p => p.classList.add("hidden"));
+  [elements.placeholder1, elements.placeholder2].forEach(p => p.classList.remove("hidden"));
 
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
+  if (data.foto1) {
+    elements.preview1.src = data.foto1;
+    elements.preview1.classList.remove("hidden");
+    elements.placeholder1.classList.add("hidden");
+  }
+  if (data.foto2) {
+    elements.preview2.src = data.foto2;
+    elements.preview2.classList.remove("hidden");
+    elements.placeholder2.classList.add("hidden");
+  }
+
+  elements.modal.classList.remove("hidden");
+  setTimeout(() => {
+    elements.modalContent.classList.remove("scale-95", "opacity-0");
+    elements.modalContent.classList.add("scale-100", "opacity-100");
+  }, 10);
 }
 
-// Close modal
-closeModal.addEventListener("click", () => {
-  modal.classList.add("hidden");
-  modal.classList.remove("flex");
-});
-
-// Show animated alert
-function showAlert() {
-  const box = alertBox.firstElementChild;
-  alertBox.classList.remove("hidden");
+const closeModalFunc = () => {
+  elements.modalContent.classList.add("scale-95", "opacity-0");
   setTimeout(() => {
-    box.classList.remove("opacity-0", "scale-90");
-    box.classList.add("opacity-100", "scale-100");
-  }, 50);
+    elements.modal.classList.add("hidden");
+    elements.barangForm.reset();
+  }, 300);
+};
 
-  setTimeout(() => {
-    box.classList.remove("opacity-100", "scale-100");
-    box.classList.add("opacity-0", "scale-90");
-    setTimeout(() => alertBox.classList.add("hidden"), 500);
-  }, 3000);
-}
+elements.closeModal.onclick = closeModalFunc;
 
-// Update form
-barangForm.addEventListener("submit", async (e) => {
+// --- Submit Logic ---
+elements.barangForm.onsubmit = async (e) => {
   e.preventDefault();
   if (!currentDocId) return;
 
-  const submitBtn = barangForm.querySelector("button[type='submit']");
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = `<svg class="animate-spin h-5 w-5 mx-auto text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-  </svg>`;
+  showGlobalLoading(true);
 
-  const jumlahDatang = document.getElementById("jumlahDatang").value;
-  const satuan = document.getElementById("satuanBarang").value;
-  const tanggal = document.getElementById("tanggalBarang").value;
-  const jam = document.getElementById("jamBarang").value;
   const verifikasi = document.getElementById("verifikasiBarang").checked;
-
   const now = new Date();
-  const verifikasiTanggal = verifikasi ? now.toLocaleDateString("id-ID") : "";
-  const verifikasiJam = verifikasi
-    ? now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
-    : "";
+  
+  const updateData = {
+    jumlahDatang: document.getElementById("jumlahDatang").value,
+    satuan: document.getElementById("satuanBarang").value,
+    tanggal: document.getElementById("tanggalBarang").value,
+    jam: document.getElementById("jamBarang").value,
+    verifikasi: verifikasi,
+    ...(verifikasi && { 
+      verifikasiTanggal: now.toLocaleDateString("id-ID"),
+      verifikasiJam: now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) 
+    }),
+  };
 
-  let fotoBase64_1 = "";
-  let fotoBase64_2 = "";
-  if (fotoInput.files[0])
-    fotoBase64_1 = await compressImage(fotoInput.files[0]);
-  if (fotoInput2.files[0])
-    fotoBase64_2 = await compressImage(fotoInput2.files[0]);
+  try {
+    if (elements.foto1.files[0]) updateData.foto1 = await compressImage(elements.foto1.files[0]);
+    if (elements.foto2.files[0]) updateData.foto2 = await compressImage(elements.foto2.files[0]);
 
-  const docRef = doc(db, "barang", currentDocId);
-  await updateDoc(docRef, {
-    jumlahDatang,
-    satuan,
-    tanggal,
-    jam,
-    verifikasi,
-    ...(verifikasi && { verifikasiTanggal, verifikasiJam }),
-    ...(fotoBase64_1 && { foto1: fotoBase64_1 }),
-    ...(fotoBase64_2 && { foto2: fotoBase64_2 }),
-  });
-
-  submitBtn.disabled = false;
-  submitBtn.textContent = "Update";
-
-  modal.classList.add("hidden");
-  modal.classList.remove("flex");
-
-  showAlert();
-});
+    await updateDoc(doc(db, "barang", currentDocId), updateData);
+    
+    closeModalFunc();
+    showToast();
+  } catch (error) {
+    console.error("Error updating:", error);
+    alert("Gagal mengupdate data.");
+  } finally {
+    showGlobalLoading(false);
+  }
+};
