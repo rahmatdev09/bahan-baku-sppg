@@ -117,9 +117,15 @@ onSnapshot(collection(db, "barang"), (snapshot) => {
   toggleSkeleton(true);
   elements.barangList.innerHTML = "";
   
+  let displayedItems = 0; // Penghitung barang yang tampil
+
   snapshot.forEach((docSnap) => {
     const data = docSnap.data();
+    
+    // Filter: Jika sudah diverifikasi admin, jangan dihitung dan jangan tampilkan
     if (data.verifikasiAdmin) return;
+
+    displayedItems++; // Tambah hitungan jika barang lolos filter
 
     const li = document.createElement("li");
     li.className = `group bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer flex justify-between items-center ${data.verifikasi ? 'border-l-4 border-l-green-500' : ''}`;
@@ -144,8 +150,22 @@ onSnapshot(collection(db, "barang"), (snapshot) => {
     li.onclick = () => openModal(docSnap.id, data);
     elements.barangList.appendChild(li);
   });
+
+  // LOGIKA TIDAK ADA BARANG
+  if (displayedItems === 0) {
+    elements.barangList.innerHTML = `
+      <div class="flex flex-col items-center justify-center py-12 px-4 text-center bg-white rounded-3xl border border-dashed border-slate-300">
+        <div class="bg-slate-100 p-4 rounded-full mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-slate-700">Tidak ada barang</h3>
+        <p class="text-slate-500 text-sm max-w-xs mx-auto">Semua daftar barang telah diverifikasi admin atau belum ada data yang dimasukkan.</p>
+      </div>
+    `;
+  }
   
-  // Berikan sedikit jeda agar transisi halus
   setTimeout(() => toggleSkeleton(false), 600);
 });
 
@@ -229,4 +249,5 @@ elements.barangForm.onsubmit = async (e) => {
     showGlobalLoading(false);
   }
 };
+
 
