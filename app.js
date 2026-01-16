@@ -146,7 +146,7 @@ onSnapshot(collection(db, "barang"), (snapshot) => {
   });
   
   // Berikan sedikit jeda agar transisi halus
-  setTimeout(() => toggleSkeleton(false), 500);
+  setTimeout(() => toggleSkeleton(false), 600);
 });
 
 // --- Modal Actions ---
@@ -229,3 +229,4 @@ elements.barangForm.onsubmit = async (e) => {
     showGlobalLoading(false);
   }
 };
+
